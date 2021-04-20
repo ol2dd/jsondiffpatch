@@ -186,11 +186,11 @@ export default ConsoleFormatter;
 
 let defaultInstance;
 
-export const format = (delta, left) => {
+export const format = (delta,transfer,transferLeftKey, left) => {
   if (!defaultInstance) {
     defaultInstance = new ConsoleFormatter();
   }
-  return defaultInstance.format(delta, left);
+  return defaultInstance.format(delta,transfer,transferLeftKey, left);
 };
 
 export function log(delta, left) {

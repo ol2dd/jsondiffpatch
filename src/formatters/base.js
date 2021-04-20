@@ -36,9 +36,11 @@ const arrayKeyToSortNumber = key => {
 const arrayKeyComparer = (key1, key2) =>
   arrayKeyToSortNumber(key1) - arrayKeyToSortNumber(key2);
 
-class BaseFormatter {
-  format(delta, left) {
+class BaseFormatter { 
+  format(delta,transfer,transferLeftKey,left) {
     const context = {};
+    this.transfer = transfer; 
+    this.transferLeftKey = transferLeftKey;
     this.prepareContext(context);
     this.recurse(context, delta, left);
     return this.finalize(context);
@@ -78,7 +80,7 @@ class BaseFormatter {
       type === 'node' ? (delta._t === 'a' ? 'array' : 'object') : '';
 
     if (typeof key !== 'undefined') {
-      this.nodeBegin(context, key, leftKey, type, nodeType, isLast);
+      this.nodeBegin(context, key, leftKey, type, nodeType, isLast,this.transferLeftKey);
     } else {
       this.rootBegin(context, type, nodeType);
     }

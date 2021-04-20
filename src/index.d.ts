@@ -1,5 +1,5 @@
 export interface Formatter {
-    format(delta: Delta, original: any): string;
+    format(delta: Delta,transfer:function,transferLeft:function, original: any): string;
 }
 
 export interface HtmlFormatter extends Formatter {

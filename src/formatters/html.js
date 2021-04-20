@@ -5,8 +5,13 @@ class HtmlFormatter extends BaseFormatter {
     context.out(`<pre class="jsondiffpatch-error">${err}</pre>`);
   }
 
-  formatValue(context, value) {
-    context.out(`<pre>${htmlEscape(JSON.stringify(value, null, 2))}</pre>`);
+  formatValue(context, value, key,leftKey) {
+    if (this.transfer) {
+      value = this.transfer(value, key,leftKey);
+    }
+    if(value){
+      context.out(`<pre>${htmlEscape(JSON.stringify(value, null, 2))}</pre>`);
+    }
   }
 
   formatTextDiffString(context, value) {
@@ -59,13 +64,18 @@ class HtmlFormatter extends BaseFormatter {
     );
   }
 
-  nodeBegin(context, key, leftKey, type, nodeType) {
+  nodeBegin(context, key, leftKey, type, nodeType,isLast,transferLeftKey) {
+    let realKey = leftKey;
+    if (transferLeftKey) {
+      realKey = transferLeftKey(leftKey, type, nodeType)    
+    }
+    
     let nodeClass = `jsondiffpatch-${type}${
       nodeType ? ` jsondiffpatch-child-node-type-${nodeType}` : ''
     }`;
     context.out(
       `<li class="${nodeClass}" data-key="${leftKey}">` +
-        `<div class="jsondiffpatch-property-name">${leftKey}</div>`
+        `<div class="jsondiffpatch-property-name">${realKey}</div>`
     );
   }
 
@@ -76,25 +86,25 @@ class HtmlFormatter extends BaseFormatter {
   /* jshint camelcase: false */
   /* eslint-disable camelcase */
 
-  format_unchanged(context, delta, left) {
+  format_unchanged(context, delta, left, key,leftKey) {
     if (typeof left === 'undefined') {
       return;
     }
     context.out('<div class="jsondiffpatch-value">');
-    this.formatValue(context, left);
+    this.formatValue(context, left, key,leftKey);
     context.out('</div>');
   }
 
-  format_movedestination(context, delta, left) {
+  format_movedestination(context, delta, left, key,leftKey) {
     if (typeof left === 'undefined') {
       return;
     }
     context.out('<div class="jsondiffpatch-value">');
-    this.formatValue(context, left);
+    this.formatValue(context, left, key,leftKey);
     context.out('</div>');
   }
 
-  format_node(context, delta, left) {
+  format_node(context, delta, left, key,leftKey) {
     // recurse
     let nodeType = delta._t === 'a' ? 'array' : 'object';
     context.out(
@@ -104,31 +114,31 @@ class HtmlFormatter extends BaseFormatter {
     context.out('</ul>');
   }
 
-  format_added(context, delta) {
+  format_added(context, delta, left, key,leftKey) {
     context.out('<div class="jsondiffpatch-value">');
-    this.formatValue(context, delta[0]);
+    this.formatValue(context, delta[0], key,leftKey);
     context.out('</div>');
   }
 
-  format_modified(context, delta) {
+  format_modified(context, delta, left, key,leftKey) {
     context.out('<div class="jsondiffpatch-value jsondiffpatch-left-value">');
-    this.formatValue(context, delta[0]);
+    this.formatValue(context, delta[0], key,leftKey);
     context.out(
       '</div>' + '<div class="jsondiffpatch-value jsondiffpatch-right-value">'
     );
-    this.formatValue(context, delta[1]);
+    this.formatValue(context, delta[1], key,leftKey);
     context.out('</div>');
   }
 
-  format_deleted(context, delta) {
+  format_deleted(context, delta, left, key,leftKey) {
     context.out('<div class="jsondiffpatch-value">');
-    this.formatValue(context, delta[0]);
+    this.formatValue(context, delta[0], key,leftKey);
     context.out('</div>');
   }
 
-  format_moved(context, delta) {
+  format_moved(context, delta, left, key,leftKey) {
     context.out('<div class="jsondiffpatch-value">');
-    this.formatValue(context, delta[0]);
+    this.formatValue(context, delta[0], key,leftKey);
     context.out(
       `</div><div class="jsondiffpatch-moved-destination">${delta[1]}</div>`
     );
@@ -157,7 +167,7 @@ class HtmlFormatter extends BaseFormatter {
     context.hasArrows = true;
   }
 
-  format_textdiff(context, delta) {
+  format_textdiff(context, delta, left, key,leftKey) {
     context.out('<div class="jsondiffpatch-value">');
     this.formatTextDiffString(context, delta[0]);
     context.out('</div>');
@@ -292,9 +302,9 @@ export default HtmlFormatter;
 
 let defaultInstance;
 
-export function format(delta, left) {
+export function format(delta,transfer,transferLeftKey, left) {
   if (!defaultInstance) {
     defaultInstance = new HtmlFormatter();
   }
-  return defaultInstance.format(delta, left);
+  return defaultInstance.format(delta,transfer,transferLeftKey, left);
 }
